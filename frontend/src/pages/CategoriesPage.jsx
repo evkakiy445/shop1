@@ -13,9 +13,14 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Divider,
+  Paper,
+  Drawer,
+  ListItemButton,
 } from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
+import { Edit, Delete, Home } from "@mui/icons-material";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = "http://localhost:8000/api/categories/";
 
@@ -25,7 +30,9 @@ export default function CategoriesPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editedName, setEditedName] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
   const headers = {
@@ -45,8 +52,10 @@ export default function CategoriesPage() {
   };
 
   const deleteCategory = async (id) => {
-    await axios.delete(`${API_URL}${id}/`, { headers });
-    fetchCategories();
+    if (window.confirm("Вы уверены, что хотите удалить эту категорию?")) {
+      await axios.delete(`${API_URL}${id}/`, { headers });
+      fetchCategories();
+    }
   };
 
   const openEditDialog = (category) => {
@@ -66,59 +75,124 @@ export default function CategoriesPage() {
   }, []);
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom align="center">
-        Категории
-      </Typography>
+    <Box sx={{ display: "flex" }}>
+      <Drawer
+        sx={{
+          width: 240,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: 240,
+            boxSizing: "border-box",
+          },
+        }}
+        variant="permanent"
+        anchor="left"
+      >
+        <Box sx={{ padding: 2 }}>
+          <Typography variant="h6">Панель администратора</Typography>
+          <List>
+            <ListItemButton onClick={() => navigate("/")}>
+              <Home sx={{ mr: 1 }} /> Главная
+            </ListItemButton>
+            <ListItemButton onClick={() => navigate("/categories")}>
+              Управление категориями
+            </ListItemButton>
+            <ListItemButton onClick={() => navigate("/orders")}>
+              Заказы
+            </ListItemButton>
+            <ListItemButton onClick={() => navigate("/products")}>
+              Продукты
+            </ListItemButton>
+            <ListItemButton onClick={() => navigate("/users")}>
+              Пользователи
+            </ListItemButton>
+          </List>
+        </Box>
+      </Drawer>
 
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-        <TextField
-          label="Новая категория"
-          fullWidth
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        />
-        <Button variant="contained" onClick={createCategory}>
-          Создать
-        </Button>
-      </Box>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 6, flexGrow: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
+          <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 600 }}>
+            Управление категориями
+          </Typography>
+        </Box>
 
-      <List>
-        {categories.map((cat) => (
-          <ListItem
-            key={cat.id}
-            secondaryAction={
-              <>
-                <IconButton edge="end" onClick={() => openEditDialog(cat)}>
-                  <Edit />
-                </IconButton>
-                <IconButton edge="end" onClick={() => deleteCategory(cat.id)}>
-                  <Delete />
-                </IconButton>
-              </>
-            }
-          >
-            <ListItemText primary={cat.name} />
-          </ListItem>
-        ))}
-      </List>
-
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-        <DialogTitle>Редактировать категорию</DialogTitle>
-        <DialogContent>
+        <Box sx={{ display: "flex", gap: 2, mb: 4, flexDirection: { xs: "column", sm: "row" }, alignItems: "center" }}>
           <TextField
+            label="Новая категория"
             fullWidth
-            value={editedName}
-            onChange={(e) => setEditedName(e.target.value)}
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            sx={{ maxWidth: "350px" }}
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Отмена</Button>
-          <Button onClick={updateCategory} variant="contained">
-            Сохранить
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={createCategory}
+            sx={{ height: "100%", minWidth: "120px" }}
+          >
+            Создать
           </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+        </Box>
+
+        <Paper sx={{ padding: 2, borderRadius: 2, boxShadow: 3 }}>
+          <Box sx={{ maxHeight: "60vh", overflowY: "auto", mb: 2 }}>
+            <List>
+              {categories.map((cat) => (
+                <ListItem
+                  key={cat.id}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    backgroundColor: "#f9f9f9",
+                    borderRadius: 2,
+                    mb: 1,
+                    boxShadow: 1,
+                  }}
+                >
+                  <ListItemText primary={cat.name} />
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <IconButton edge="end" onClick={() => openEditDialog(cat)} sx={{ color: "#1976d2" }}>
+                      <Edit />
+                    </IconButton>
+                    <IconButton edge="end" onClick={() => deleteCategory(cat.id)} sx={{ color: "#d32f2f" }}>
+                      <Delete />
+                    </IconButton>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+          <Divider />
+          <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Typography variant="body2" color="textSecondary">
+              Количество категорий: {categories.length}
+            </Typography>
+          </Box>
+        </Paper>
+
+        <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm">
+          <DialogTitle>Редактировать категорию</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Имя категории"
+              fullWidth
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              sx={{ mt: 2 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditDialogOpen(false)} color="secondary">
+              Отмена
+            </Button>
+            <Button onClick={updateCategory} variant="contained" color="primary">
+              Сохранить
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </Box>
   );
 }

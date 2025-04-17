@@ -43,6 +43,34 @@ const DashboardPage = () => {
         >
           Товары
         </Button>
+
+        <Button
+          variant="contained"
+          fullWidth
+          sx={{ mt: 2 }}
+          onClick={() => navigate("/users")}
+        >
+          Пользователи
+        </Button>
+
+        <Button
+          variant="contained"
+          fullWidth
+          sx={{ mt: 2 }}
+          onClick={() => navigate("/orders")}
+        >
+          Заказы
+        </Button>
+
+        <Button
+          variant="contained"
+          fullWidth
+          sx={{ mt: 2 }}
+          onClick={() => navigate("/home")}
+        >
+          Главная
+        </Button>
+
       </Paper>
     </Box>
   );

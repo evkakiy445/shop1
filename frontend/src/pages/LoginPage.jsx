@@ -19,15 +19,17 @@ export default function LoginPage() {
     try {
       const res = await axios.post("http://localhost:8000/api/auth/login/", formData);
 
-      // Проверяем роль пользователя
+      const accessToken = res.data.access;
       const userRole = res.data.user?.role;
-      if (userRole !== "admin") {
-        setError("Доступ разрешён только администраторам");
-        return;
-      }
 
-      localStorage.setItem("token", res.data.access);
-      navigate("/dashboard");
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("role", userRole);
+
+      if (userRole === "user" || userRole === "manager") {
+        navigate("/"); 
+      } else if (userRole === "admin") {
+        navigate("/dashboard"); 
+      }
     } catch (err) {
       setError("Ошибка авторизации: неверные данные или сервер недоступен");
       console.error("Ошибка авторизации", err);
@@ -37,7 +39,7 @@ export default function LoginPage() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <Typography variant="h4" gutterBottom>Вход в админку</Typography>
+        <Typography variant="h4" gutterBottom>Вход</Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
           <TextField
             label="Логин"

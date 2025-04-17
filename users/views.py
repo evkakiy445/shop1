@@ -5,6 +5,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer, LoginSerializer
+from rest_framework import generics, permissions
+from rest_framework.exceptions import PermissionDenied
+from .permissions import IsAdmin
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -27,14 +31,13 @@ class LoginView(generics.GenericAPIView):
 
         refresh = RefreshToken.for_user(user)
         
-        # Добавляем пользовательские данные в ответ
         response_data = {
             "access": str(refresh.access_token),
             "refresh": str(refresh),
             "user": {
                 "id": user.id,
                 "username": user.username,
-                "role": user.role  # Ваше поле role из модели User
+                "role": user.role 
             }
         }
 
@@ -46,3 +49,25 @@ class UserView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+class UserDeleteView(generics.DestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        user_to_delete = super().get_object()
+        current_user = self.request.user
+
+        if current_user.role == 'admin':
+            return user_to_delete
+        elif current_user == user_to_delete:
+            return user_to_delete
+        else:
+            raise PermissionDenied("You do not have permission to delete this user.")
+
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+
